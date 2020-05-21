@@ -1,0 +1,139 @@
+{
+	"volumes": [
+		{
+		  "name": "web-config",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/web"
+		  }
+		},
+		{
+		  "name": "web-letsencrypt",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/web/letsencrypt"
+		  }
+		},
+		{
+		  "name": "web-transcripts",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/transcripts"
+		  }
+		},
+		{
+		  "name": "web-images",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/images"
+		  }
+		},
+		{
+		  "name": "prosody-config",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/prosody/config"
+		  }
+		},
+		{
+		  "name": "prosody-plugins",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/prosody/prosody-plugins-custom"
+		  }
+		},
+		{
+		  "name": "jicofo-config",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/jicofo"
+		  }
+		},
+		{
+		  "name": "jvb-config",
+		  "host": {
+			"sourcePath": "/var/app/current/.jitsi-meet-cfg/jvb"
+		  }
+		}
+	],	
+    "containerDefinitions": [
+        {
+            "essential": true,
+            "image": "jitsi/jicofo",
+            "mountPoints": [
+				{
+				  "sourceVolume": "jicofo-config",
+				  "containerPath": "/config:Z"
+				}
+			],
+            "name": "jicofo",
+			"memory": 512
+        },
+        {
+            "essential": true,
+            "image": "jitsi/jvb",
+            "mountPoints": [
+				{
+					"sourceVolume": "jvb-config",
+					"containerPath": "/config:Z"
+				}
+			],
+            "name": "jvb",
+			"memory": 512,
+            "portMappings": [
+                {
+                    "containerPort": 10000,
+                    "hostPort": 10000,
+                    "protocol": "udp"
+                },
+                {
+                    "containerPort": 4443,
+                    "hostPort": 4443
+                }
+            ]
+        },
+        {
+            "essential": true,
+            "image": "jitsi/prosody",
+            "mountPoints": [
+				{
+					"sourceVolume": "prosody-config",
+					"containerPath": "/config:Z"
+				},
+				{
+					"sourceVolume": "prosody-plugins",
+					"containerPath": "/prosody-plugins-custom:Z"
+				}
+			],
+			"memory": 512,
+            "name": "prosody"
+        },
+        {
+            "essential": true,
+            "image": "jitsi/web",
+            "mountPoints": [
+				{
+					"sourceVolume": "web-config",
+					"containerPath": "/config:Z"
+				},
+				{
+					"sourceVolume": "web-letsencrypt",
+					"containerPath": "/etc/letsencrypt:Z"
+				},
+				{
+					"sourceVolume": "web-transcripts",
+					"containerPath": "/usr/share/jitsi-meet/transcripts:Z"
+				},
+				{
+					"sourceVolume": "web-images",
+					"containerPath": "/usr/share/jitsi-meet/images:Z"
+				}
+			],
+            "name": "web",
+			"memory": 512,
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "hostPort": 8000
+                },
+                {
+                    "containerPort": 443,
+                    "hostPort": 8443
+                }
+            ]
+        }
+    ]
+}

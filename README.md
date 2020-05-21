@@ -488,3 +488,17 @@ You are now able to run `docker-compose up` as usual.
 [jwt.io]: https://jwt.io/#debugger-io
 [Etherpad]: https://github.com/ether/etherpad-lite
 [Jibri]: https://github.com/jitsi/jibri
+
+
+## Nutava Meet process
+
+* Generate self-signed cert to use https on local (https://letsencrypt.org/docs/certificates-for-localhost/). With the new cert and key, override `cert.crt` and `cert.key` in `./jitsi-meet-cfg/web/keys`. Be sure to 'trust' the cert in your local keychain.
+* Added volume mount `./jitsi-meet-cfg/images` to `<container>:/user/share/jitsi-meet/images`. Images added to this directory will override the default images.
+* In `.env`, the `CONFIG` env variable should be set to somewhere accessible by non-root user.
+* Hard refreshing in the browser sometimes doesn't work. Try again in incognito or different browser.
+* It has been observed, in some cases, that changes in the `.env` file doesn't take effect until the config directory `./jitsi-meet-cfg` is not removed and re-setup.
+
+## Nutava @TODO
+* Remove temporary self-signed cert and key from the `./jitsi-meet-cfg` config folder
+* Investigate dockerised deployment in Azure
+* Scope out auth requirements if any

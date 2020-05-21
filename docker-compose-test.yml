@@ -1,0 +1,94 @@
+version: '3'
+
+services:
+  # Frontend
+  web:
+    image: jitsi/web
+    ports:
+      - 8000:80
+      - 8443:443
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/web:/config:Z
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/web/letsencrypt:/etc/letsencrypt:Z
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/transcripts:/usr/share/jitsi-meet/transcripts:Z
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/images:/usr/share/jitsi-meet/images:Z
+    environment:
+      - JICOFO_AUTH_USER
+
+    networks:
+      meet.jitsi:
+        aliases:
+          - meet.jitsi
+
+  # XMPP server
+  prosody:
+    image: jitsi/prosody
+    restart: unless-stopped
+    expose:
+      - 5222
+      - 5347
+      - 5280
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/prosody/config:/config:Z
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/prosody/prosody-plugins-custom:/prosody-plugins-custom:Z
+    environment:
+      - XMPP_DOMAIN
+      - XMPP_AUTH_DOMAIN
+      - XMPP_GUEST_DOMAIN
+      - XMPP_MUC_DOMAIN
+      - XMPP_INTERNAL_MUC_DOMAIN
+      - XMPP_RECORDER_DOMAIN
+      - JICOFO_COMPONENT_SECRET= 62be21743b2f0eb824f19b55c8c045fa
+      - JICOFO_AUTH_PASSWORD = 52b850ae0ea7801a9e23d3497d4e86a1
+      - JVB_AUTH_USER = jvb
+      - JVB_AUTH_PASSWORD = 6a85e4f607ad5d0a51de84b69f9a0ccb
+      - JIGASI_XMPP_USER
+      - JIGASI_XMPP_PASSWORD
+
+    networks:
+      meet.jitsi:
+        aliases:
+          - xmpp.meet.jitsi
+
+  # Focus component
+  jicofo:
+    image: jitsi/jicofo
+    restart: unless-stopped
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/jicofo:/config:Z
+    environment:
+      - XMPP_DOMAIN
+      - XMPP_AUTH_DOMAIN
+      - XMPP_INTERNAL_MUC_DOMAIN
+      - XMPP_SERVER
+      - JICOFO_COMPONENT_SECRET = 62be21743b2f0eb824f19b55c8c045fa
+      - JICOFO_AUTH_PASSWORD = 52b850ae0ea7801a9e23d3497d4e86a1
+    depends_on:
+      - prosody
+    networks:
+      meet.jitsi:
+
+  # Video bridge
+  jvb:
+    image: jitsi/jvb
+    restart: unless-stopped
+    ports:
+       :/udp
+       4443:4443
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/site/wwwroot/${CONFIG}/jvb:/config:Z
+    environment:
+      - XMPP_AUTH_DOMAIN
+      - XMPP_INTERNAL_MUC_DOMAIN
+      - XMPP_SERVER
+      - JVB_AUTH_USER = jvb
+      - JVB_AUTH_PASSWORD = 6a85e4f607ad5d0a51de84b69f9a0ccb
+      - TZ
+    depends_on:
+      - prosody
+    networks:
+      meet.jitsi:
+
+# Custom network so all services can communicate using a FQDN
+networks:
+  meet.jitsi:
